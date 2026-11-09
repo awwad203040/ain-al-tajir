@@ -1,0 +1,21 @@
+CREATE TABLE `invoices` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`subscriptionId` int,
+	`provider` enum('stripe','paytabs','paypal') NOT NULL,
+	`providerInvoiceId` varchar(191) NOT NULL,
+	`invoiceNumber` varchar(128),
+	`status` enum('draft','open','paid','void','uncollectible') NOT NULL DEFAULT 'open',
+	`amountDueMinor` int NOT NULL DEFAULT 10000,
+	`amountPaidMinor` int NOT NULL DEFAULT 0,
+	`currency` varchar(3) NOT NULL DEFAULT 'SAR',
+	`hostedInvoiceUrl` text,
+	`invoicePdfUrl` text,
+	`periodStart` timestamp,
+	`periodEnd` timestamp,
+	`paidAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `invoices_id` PRIMARY KEY(`id`),
+	CONSTRAINT `invoices_providerInvoiceId_unique` UNIQUE(`providerInvoiceId`)
+);

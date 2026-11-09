@@ -1,0 +1,1 @@
+ALTER TABLE `branchInventoryTransferMovements` MODIFY COLUMN `direction` enum('sent','received','reversed') NOT NULL;

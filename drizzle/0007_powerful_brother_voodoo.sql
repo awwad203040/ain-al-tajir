@@ -1,0 +1,1 @@
+ALTER TABLE `priceRecommendationDecisions` ADD `costPriceMinor` int;

@@ -1,0 +1,1 @@
+ALTER TABLE `inventoryReplenishmentRequests` ADD `receivedQuantity` int DEFAULT 0 NOT NULL;

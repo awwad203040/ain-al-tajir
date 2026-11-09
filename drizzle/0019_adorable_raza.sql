@@ -1,0 +1,1 @@
+ALTER TABLE `inventoryReplenishmentNotifications` MODIFY COLUMN `type` enum('replenishment_suggested','replenishment_approved','replenishment_closed') NOT NULL DEFAULT 'replenishment_suggested';
