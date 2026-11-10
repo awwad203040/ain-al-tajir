@@ -7,6 +7,9 @@ on:
       - main
       - master
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     name: Build Android APK
@@ -39,6 +42,11 @@ jobs:
         run: npx expo prebuild --platform android --clean
         env:
           CI: 1
+          EXPO_PUBLIC_APP_ID: "ZqLP4Hp4heLnQ5Qv8pMj5b"
+          EXPO_PUBLIC_OAUTH_PORTAL_URL: "https://manus.im"
+          EXPO_PUBLIC_OAUTH_SERVER_URL: "https://api.manus.im"
+          EXPO_PUBLIC_OWNER_OPEN_ID: "NzzzKHspJv2F57DD8S7yXr"
+          EXPO_PUBLIC_OWNER_NAME: "Moustafa mohamed"
 
       - name: 🐘 Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -64,3 +72,14 @@ jobs:
           name: ain-al-tajir-app-apk
           path: ${{ steps.find_apk.outputs.apk_path }}
           retention-days: 30
+
+      - name: 🏷️ Publish APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.1
+          name: "عين التاجر v1.0.1 (APK)"
+          body: "النسخة المحدثة لتطبيق عين التاجر — تم حل مشكلة توقف الشعار وتفعيل الفتح التلقائي السلس"
+          files: ${{ steps.find_apk.outputs.apk_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

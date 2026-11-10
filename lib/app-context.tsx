@@ -218,15 +218,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
   ]);
 
   useEffect(() => {
+    let mounted = true;
     Promise.all([AsyncStorage.getItem(LANGUAGE_KEY), AsyncStorage.getItem(TASKS_KEY)])
       .then(([storedLanguage, storedTasks]) => {
+        if (!mounted) return;
         if (storedLanguage === "ar" || storedLanguage === "en") setLanguageState(storedLanguage);
         if (storedTasks) {
-          const parsed = JSON.parse(storedTasks) as Task[];
-          if (Array.isArray(parsed)) setTasks(parsed);
+          try {
+            const parsed = JSON.parse(storedTasks) as Task[];
+            if (Array.isArray(parsed)) setTasks(parsed);
+          } catch {}
         }
       })
-      .finally(() => setIsReady(true));
+      .catch((err) => {
+        console.warn("[AppContext] storage load error:", err);
+      })
+      .finally(() => {
+        if (mounted) setIsReady(true);
+      });
+
+    // Fallback timer: ensure isReady becomes true within 200ms
+    const timer = setTimeout(() => {
+      if (mounted) setIsReady(true);
+    }, 200);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {

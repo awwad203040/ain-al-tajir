@@ -8,12 +8,12 @@ const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
-  portal: process.env.EXPO_PUBLIC_OAUTH_PORTAL_URL ?? "",
-  server: process.env.EXPO_PUBLIC_OAUTH_SERVER_URL ?? "",
-  appId: process.env.EXPO_PUBLIC_APP_ID ?? "",
-  ownerId: process.env.EXPO_PUBLIC_OWNER_OPEN_ID ?? "",
-  ownerName: process.env.EXPO_PUBLIC_OWNER_NAME ?? "",
-  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? "",
+  portal: process.env.EXPO_PUBLIC_OAUTH_PORTAL_URL || "https://manus.im",
+  server: process.env.EXPO_PUBLIC_OAUTH_SERVER_URL || "https://api.manus.im",
+  appId: process.env.EXPO_PUBLIC_APP_ID || "ZqLP4Hp4heLnQ5Qv8pMj5b",
+  ownerId: process.env.EXPO_PUBLIC_OWNER_OPEN_ID || "NzzzKHspJv2F57DD8S7yXr",
+  ownerName: process.env.EXPO_PUBLIC_OWNER_NAME || "Moustafa mohamed",
+  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL || "",
   deepLinkScheme: schemeFromBundleId,
 };
 

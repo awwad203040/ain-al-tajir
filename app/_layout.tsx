@@ -6,7 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { ActivityIndicator, Platform, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { AppProvider, useApp } from "@/lib/app-context";
@@ -23,12 +23,19 @@ import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-run
 import { useAuth } from "@/hooks/use-auth";
 import { clearTrialReminderSchedule, getTrialReminderPreference, scheduleTrialReminders } from "@/lib/trial-notifications";
 
+import * as SplashScreen from "expo-splash-screen";
+
+// Prevent auto hiding before app is mounted
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
-});
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
+  });
+} catch {}
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -36,6 +43,21 @@ export const unstable_settings = {
 
 function AppReadyGate({ children }: { children: React.ReactNode }) {
   const { isReady } = useApp();
+
+  useEffect(() => {
+    if (isReady) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [isReady]);
+
+  useEffect(() => {
+    // Failsafe: hide splash screen after 800ms maximum
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (!isReady) {
     return (
       <View style={{ alignItems: "center", backgroundColor: "#F4F7F6", flex: 1, justifyContent: "center" }}>
@@ -43,20 +65,24 @@ function AppReadyGate({ children }: { children: React.ReactNode }) {
       </View>
     );
   }
-  return children;
+  return <>{children}</>;
 }
 
 function BranchNotificationObserver() {
   useEffect(() => {
     if (Platform.OS === "web") return;
-    const openBranchReceipt = (response: Notifications.NotificationResponse | null) => {
-      const route = response?.notification.request.content.data?.route;
-      if (route === "/branch-transfers") router.push("/branch-transfers" as never);
-      if (route === "/inventory-operations") router.push("/inventory-operations" as never);
-    };
-    void Notifications.getLastNotificationResponseAsync().then(openBranchReceipt).catch(() => undefined);
-    const subscription = Notifications.addNotificationResponseReceivedListener(openBranchReceipt);
-    return () => subscription.remove();
+    try {
+      const openBranchReceipt = (response: Notifications.NotificationResponse | null) => {
+        try {
+          const route = response?.notification?.request?.content?.data?.route;
+          if (route === "/branch-transfers") router.push("/branch-transfers" as never);
+          if (route === "/inventory-operations") router.push("/inventory-operations" as never);
+        } catch {}
+      };
+      void Notifications.getLastNotificationResponseAsync().then(openBranchReceipt).catch(() => undefined);
+      const subscription = Notifications.addNotificationResponseReceivedListener(openBranchReceipt);
+      return () => subscription.remove();
+    } catch {}
   }, []);
   return null;
 }
@@ -64,19 +90,21 @@ function BranchNotificationObserver() {
 function TrialReminderObserver() {
   const { isAuthenticated } = useAuth();
   const { language } = useApp();
-  const account = trpc.access.status.useQuery(undefined, { enabled: isAuthenticated, retry: false, staleTime: 30_000 });
+  const account = trpc.access.status.useQuery(undefined, { enabled: Boolean(isAuthenticated), retry: false, staleTime: 30_000 });
 
   useEffect(() => {
     if (Platform.OS === "web" || !isAuthenticated || account.isLoading) return;
     void (async () => {
-      const enabled = await getTrialReminderPreference();
-      if (enabled && account.data?.access.kind === "trial" && account.data.profile?.trialEndsAt) {
-        await scheduleTrialReminders(account.data.profile.trialEndsAt, language);
-      } else if (!enabled || account.data?.access.kind === "paid" || account.data?.access.kind === "subscription") {
-        await clearTrialReminderSchedule();
-      }
+      try {
+        const enabled = await getTrialReminderPreference();
+        if (enabled && account.data?.access?.kind === "trial" && account.data?.profile?.trialEndsAt) {
+          await scheduleTrialReminders(account.data.profile.trialEndsAt, language);
+        } else if (!enabled || account.data?.access?.kind === "paid" || account.data?.access?.kind === "subscription") {
+          await clearTrialReminderSchedule();
+        }
+      } catch {}
     })();
-  }, [account.data?.access.kind, account.data?.profile?.trialEndsAt, account.isLoading, isAuthenticated, language]);
+  }, [account.data?.access?.kind, account.data?.profile?.trialEndsAt, account.isLoading, isAuthenticated, language]);
   return null;
 }
 
@@ -197,5 +225,23 @@ export default function RootLayout() {
         <SafeAreaProvider initialMetrics={providerInitialMetrics}><AppReadyGate>{content}</AppReadyGate></SafeAreaProvider>
       </AppProvider>
     </ThemeProvider>
+  );
+}
+
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#F4F7F6", justifyContent: "center", alignItems: "center", padding: 24 }}>
+      <Text style={{ fontSize: 20, fontWeight: "bold", color: "#0F766E", marginBottom: 12 }}>عين التاجر</Text>
+      <Text style={{ fontSize: 14, color: "#667A77", textAlign: "center", marginBottom: 20 }}>
+        {error?.message || "تعذر بدء الواجهة، يرجى إعادة المحاولة."}
+      </Text>
+      <Pressable onPress={retry} style={{ backgroundColor: "#0F766E", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}>
+        <Text style={{ color: "#FFFFFF", fontWeight: "bold", fontSize: 15 }}>إعادة المحاولة</Text>
+      </Pressable>
+    </View>
   );
 }

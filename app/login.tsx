@@ -16,6 +16,10 @@ export default function LoginScreen() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
+    // Ensure splash screen is hidden once login screen mounts
+    import("expo-splash-screen").then((module) => {
+      module.hideAsync().catch(() => {});
+    }).catch(() => {});
     if (!loading && isAuthenticated) router.replace("/auth/continue" as never);
   }, [isAuthenticated, loading]);
 
