@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-apk:
-    name: Build Android APK (Free GitHub Runner)
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -32,9 +32,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 🤖 Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: 📦 Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -43,17 +40,18 @@ jobs:
         env:
           CI: 1
 
-      - name: 🔨 Grant execute permission for Gradle
-        run: chmod +x android/gradlew
+      - name: 🐘 Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: 📱 Build Android Release APK
+      - name: 📱 Build Android APK
+        working-directory: ./android
         run: |
-          cd android
-          ./gradlew assembleRelease --no-daemon -x lint -x test
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -x lint -x test
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
-      - name: 🔍 Find generated APK
+      - name: 🔍 Locate generated APK
         id: find_apk
         run: |
           APK_PATH=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
