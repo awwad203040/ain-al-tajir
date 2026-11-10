@@ -51,18 +51,21 @@ jobs:
       - name: 🐘 Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: 📱 Build Android APK
+      - name: 📱 Build Android Release APK (Standalone with embedded bundle)
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon -x lint -x test
+          ./gradlew assembleRelease --no-daemon -x lint -x test
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: 🔍 Locate generated APK
         id: find_apk
         run: |
-          APK_PATH=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          fi
           echo "Found APK at: $APK_PATH"
           echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
 
@@ -77,9 +80,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.1
-          name: "عين التاجر v1.0.1 (APK)"
-          body: "النسخة المحدثة لتطبيق عين التاجر — تم حل مشكلة توقف الشعار وتفعيل الفتح التلقائي السلس"
+          tag_name: v1.0.2
+          name: "عين التاجر v1.0.2 (النسخة المستقلة الكاملة)"
+          body: "النسخة المستقلة لتطبيق عين التاجر — مدمج بها كود الـ JavaScript وحزمة العرض بالكامل للعمل المباشر على الهاتف دون الحاجة لأي خادم محلي"
           files: ${{ steps.find_apk.outputs.apk_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
