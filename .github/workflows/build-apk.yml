@@ -67,13 +67,13 @@ jobs:
             RAW_APK=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
           fi
           echo "Found raw APK at: $RAW_APK"
-          cp "$RAW_APK" "./ain-al-tajir-v1.0.3.apk"
-          echo "apk_path=./ain-al-tajir-v1.0.3.apk" >> $GITHUB_OUTPUT
+          cp "$RAW_APK" "./ain-al-tajir-v1.0.4.apk"
+          echo "apk_path=./ain-al-tajir-v1.0.4.apk" >> $GITHUB_OUTPUT
 
       - name: 🚀 Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ain-al-tajir-v1.0.3
+          name: ain-al-tajir-v1.0.4
           path: ${{ steps.find_apk.outputs.apk_path }}
           retention-days: 30
 
@@ -81,14 +81,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.3
-          name: "عين التاجر v1.0.3 (إصلاح مشكلة الشعار وبدء التشغيل الفوري)"
+          tag_name: v1.0.4
+          name: "عين التاجر v1.0.4 (تسجيل ودخول محلي مستقل دون تحويل خارجي)"
           body: |
-            تحديث شامل لحل مشكلة التوقف عند الشعار (Splash Screen):
-            - تعطيل reactCompiler التجريبي لضمان توافق محرك Hermes وحزمة العرض في وضع Release.
-            - إزالة تعليق الشاشة الافتتاحية التلقائي للسماح بظهور واجهة التطبيق وتسجيل الدخول فوراً.
-            - تأمين وتدريع معالجات السمات والأزرار لمنع أي خطأ غير معالج أثناء التهيئة الأولى.
-            - التطبيق مدمج بالكامل وبداخله حزمة الجافاسكريبت والموارد المستقلة 100%.
+            تحديث رئيسي للاستقلالية الكاملة عن أي منصة خارجية:
+            - إلغاء التحويل الخارجي لـ Manus OAuth بالكامل عند الدخول أو التسجيل.
+            - تسجيل فوري ومباشر للتجربة المجانية لمدة 7 أيام داخل التطبيق مباشرة.
+            - إضافة زر الدخول السريع للنسخة التجريبية (Demo Mode) بضغطة زر واحدة.
+            - دعم العمل دون الحاجة لخادم سحابي عبر تفعيل صلاحيات الاستخدام والتجربة محلياً.
           files: ${{ steps.find_apk.outputs.apk_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

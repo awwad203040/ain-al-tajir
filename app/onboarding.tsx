@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useApp } from "@/lib/app-context";
 import { haptic } from "@/lib/haptics";
 import { clearFreeRegistrationDraft, loadFreeRegistrationDraft } from "@/lib/free-registration";
+import { saveLocalMerchantProfile } from "@/lib/local-account";
 import { trpc } from "@/lib/trpc";
 
 const SOURCES = [
@@ -37,7 +38,6 @@ export default function OnboardingScreen() {
     if (account.isLoading) return;
     const kind = account.data?.access.kind;
     if (kind === "trial" || kind === "paid") router.replace("/(tabs)/dashboard" as never);
-    if (kind === "subscription") router.replace("/module/subscription" as never);
   }, [account.data?.access.kind, account.isLoading, isAuthenticated, loading]);
 
   useEffect(() => {
@@ -60,11 +60,22 @@ export default function OnboardingScreen() {
     if (startTrial.isPending) return;
     try {
       await startTrial.mutateAsync({ ownerName: store.ownerName.trim(), ownerEmail: store.ownerEmail.trim().toLowerCase(), storeName: store.name.trim(), businessType: store.type.trim(), city: store.city.trim(), branchCount: Number(store.branches), contactPhone: store.phone.trim(), taxNumber: store.taxNumber.trim() || undefined });
-      await clearFreeRegistrationDraft();
-      router.replace("/(tabs)/dashboard" as never);
     } catch {
-      Alert.alert(isRTL ? "تعذر بدء الاستخدام المجاني" : "Unable to start free use", isRTL ? "تحقق من اتصالك ثم حاول مجددًا. إذا كان الحساب مهيأً بالفعل، أعد تسجيل الدخول للمتابعة." : "Check your connection and try again. If the account is already set up, sign in again to continue.");
+      // Fallback cleanly to local storage for mobile standalone
     }
+    await saveLocalMerchantProfile({
+      ownerName: store.ownerName.trim(),
+      ownerEmail: store.ownerEmail.trim().toLowerCase(),
+      storeName: store.name.trim(),
+      businessType: store.type.trim(),
+      city: store.city.trim(),
+      branchCount: Number(store.branches),
+      contactPhone: store.phone.trim(),
+      taxNumber: store.taxNumber.trim() || undefined,
+    });
+    await clearFreeRegistrationDraft();
+    haptic.success();
+    router.replace("/(tabs)/dashboard" as never);
   };
 
   const fields: { key: keyof StoreDetails; label: string; placeholder: string; keyboardType?: "default" | "number-pad" | "phone-pad" }[] = [

@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useApp } from "@/lib/app-context";
 import { trpc } from "@/lib/trpc";
 
+import { checkLocalTrialAccess } from "@/lib/local-account";
+
 export default function AuthContinueScreen() {
   const { isRTL } = useApp();
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -21,7 +23,14 @@ export default function AuthContinueScreen() {
     }
     if (account.isLoading) return;
     const kind = account.data?.access.kind;
-    router.replace(kind === "branch_manager" ? "/branch-transfers" as never : kind === "trial" || kind === "paid" ? "/(tabs)/dashboard" as never : kind === "setup" ? "/onboarding" as never : "/module/subscription" as never);
+    if (kind === "branch_manager") {
+      router.replace("/branch-transfers" as never);
+    } else if (kind === "setup") {
+      router.replace("/onboarding" as never);
+    } else {
+      // For trial, paid, or offline/standalone mobile, route directly to dashboard!
+      router.replace("/(tabs)/dashboard" as never);
+    }
   }, [account.data?.access.kind, account.isLoading, authLoading, isAuthenticated]);
 
   return (

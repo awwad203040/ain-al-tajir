@@ -9,7 +9,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useAuth } from "@/hooks/use-auth";
 import { useApp } from "@/lib/app-context";
 import { haptic } from "@/lib/haptics";
-import { startOAuthLogin } from "@/constants/oauth";
+import { ensureLocalUserSession, loginAsDemoUser } from "@/lib/local-account";
 
 export default function LoginScreen() {
   const { t, isRTL, language, setLanguage } = useApp();
@@ -20,7 +20,7 @@ export default function LoginScreen() {
     SplashScreen.hideAsync().catch(() => {});
     if (!loading && isAuthenticated) {
       try {
-        router.replace("/auth/continue" as never);
+        router.replace("/(tabs)/dashboard" as never);
       } catch {}
     }
   }, [isAuthenticated, loading]);
@@ -28,7 +28,22 @@ export default function LoginScreen() {
   const signIn = async () => {
     setStarting(true);
     try {
-      await startOAuthLogin();
+      await ensureLocalUserSession();
+      haptic.success();
+      router.replace("/(tabs)/dashboard" as never);
+    } catch {
+      router.push("/register" as never);
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const startDemo = async () => {
+    setStarting(true);
+    try {
+      await loginAsDemoUser();
+      haptic.success();
+      router.replace("/(tabs)/dashboard" as never);
     } finally {
       setStarting(false);
     }
@@ -67,10 +82,14 @@ export default function LoginScreen() {
         </View>
 
         <View className="gap-3">
-          <PrimaryButton label={starting ? (isRTL ? "جارٍ فتح تسجيل الدخول…" : "Opening sign-in…") : (isRTL ? "تسجيل الدخول" : "Sign in")} onPress={() => void signIn()} icon="login" />
+          <PrimaryButton label={starting ? (isRTL ? "جارٍ تسجيل الدخول…" : "Signing in…") : (isRTL ? "تسجيل الدخول والمتابعة" : "Sign in and continue")} onPress={() => void signIn()} icon="login" />
           <Pressable accessibilityRole="button" onPress={() => { haptic.light(); router.push("/register"); }} style={({ pressed }) => [styles.freeRegistrationButton, pressed && styles.pressed]}>
             <MaterialIcons name="person-add-alt-1" size={19} color="#0F766E" />
             <Text style={styles.freeRegistrationText}>{isRTL ? "تسجيل جديد — ابدأ 7 أيام مجانًا" : "New registration — start 7 days free"}</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={() => void startDemo()} style={({ pressed }) => [styles.demoButton, pressed && styles.pressed]}>
+            <MaterialIcons name="explore" size={19} color="#2D5A54" />
+            <Text style={styles.demoButtonText}>{isRTL ? "الدخول السريع للنسخة التجريبية (Demo)" : "Quick access to Demo Mode"}</Text>
           </Pressable>
         </View>
 
@@ -91,5 +110,7 @@ const styles = StyleSheet.create({
   languageButton: { alignItems: "center", backgroundColor: "#FFFFFF", borderColor: "#DDE7E4", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 6, paddingHorizontal: 12, paddingVertical: 9 },
   freeRegistrationButton: { alignItems: "center", backgroundColor: "#E4F5F1", borderColor: "#9FCAC2", borderRadius: 16, borderWidth: 1, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 50 },
   freeRegistrationText: { color: "#0F766E", fontSize: 14, fontWeight: "800" },
+  demoButton: { alignItems: "center", backgroundColor: "#F0F5F4", borderColor: "#C8DCD8", borderRadius: 16, borderWidth: 1, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 48 },
+  demoButtonText: { color: "#2D5A54", fontSize: 13, fontWeight: "700" },
   pressed: { opacity: 0.72 },
 });

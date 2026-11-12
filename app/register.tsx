@@ -8,7 +8,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useApp } from "@/lib/app-context";
 import { haptic } from "@/lib/haptics";
 import { saveFreeRegistrationDraft, validateFreeRegistration } from "@/lib/free-registration";
-import { startOAuthLogin } from "@/constants/oauth";
+import { createLocalUserSession } from "@/lib/local-account";
 
 export default function RegisterScreen() {
   const { isRTL } = useApp();
@@ -29,7 +29,15 @@ export default function RegisterScreen() {
     setStarting(true);
     try {
       await saveFreeRegistrationDraft(form);
-      await startOAuthLogin();
+      await createLocalUserSession({
+        name: form.ownerName.trim(),
+        email: form.ownerEmail.trim().toLowerCase(),
+        phone: form.contactPhone.trim(),
+      });
+      haptic.success();
+      router.replace("/onboarding" as never);
+    } catch {
+      Alert.alert(isRTL ? "تنبيه" : "Notice", isRTL ? "حدث خطأ غير متوقع، يرجى إعادة المحاولة." : "An unexpected error occurred, please try again.");
     } finally { setStarting(false); }
   };
 
@@ -61,7 +69,7 @@ export default function RegisterScreen() {
           </View>
           <View className="mt-6 rounded-2xl bg-primary/10 p-4"><View className={`flex-row items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}><MaterialIcons name="event-available" size={21} color="#0F766E" /><Text className={`flex-1 text-xs leading-5 text-muted ${isRTL ? "text-right" : "text-left"}`}>{isRTL ? "لن تُطلب بطاقة. تحفظ هذه البيانات مع ملف متجرك وتبدأ الفترة المجانية بعد إكمال الإعداد." : "No card is required. These details are saved with your store profile and free use starts after setup."}</Text></View></View>
           <View className="mt-7">
-            <PrimaryButton label={starting ? (isRTL ? "جارٍ فتح تسجيل الدخول…" : "Opening sign-in…") : (isRTL ? "متابعة وتسجيل الدخول" : "Continue and sign in")} onPress={() => void begin()} icon="login" />
+            <PrimaryButton label={starting ? (isRTL ? "جارٍ المتابعة…" : "Continuing…") : (isRTL ? "متابعة واستكمال إعداد المتجر" : "Continue to store setup")} onPress={() => void begin()} icon="arrow-forward" />
             <Pressable accessibilityRole="button" onPress={() => { haptic.light(); router.replace("/login"); }} style={styles.loginLink}><Text className="text-sm font-semibold text-primary">{isRTL ? "لديك حساب؟ تسجيل الدخول" : "Already have an account? Sign in"}</Text></Pressable>
           </View>
         </ScrollView>
