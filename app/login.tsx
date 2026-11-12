@@ -1,5 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -16,11 +17,12 @@ export default function LoginScreen() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-    // Ensure splash screen is hidden once login screen mounts
-    import("expo-splash-screen").then((module) => {
-      module.hideAsync().catch(() => {});
-    }).catch(() => {});
-    if (!loading && isAuthenticated) router.replace("/auth/continue" as never);
+    SplashScreen.hideAsync().catch(() => {});
+    if (!loading && isAuthenticated) {
+      try {
+        router.replace("/auth/continue" as never);
+      } catch {}
+    }
   }, [isAuthenticated, loading]);
 
   const signIn = async () => {

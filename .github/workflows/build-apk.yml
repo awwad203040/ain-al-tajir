@@ -59,20 +59,21 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=4096"
 
-      - name: 🔍 Locate generated APK
+      - name: 🔍 Locate and rename generated APK
         id: find_apk
         run: |
-          APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            APK_PATH=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          RAW_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$RAW_APK" ]; then
+            RAW_APK=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
           fi
-          echo "Found APK at: $APK_PATH"
-          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "Found raw APK at: $RAW_APK"
+          cp "$RAW_APK" "./ain-al-tajir-v1.0.3.apk"
+          echo "apk_path=./ain-al-tajir-v1.0.3.apk" >> $GITHUB_OUTPUT
 
       - name: 🚀 Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ain-al-tajir-app-apk
+          name: ain-al-tajir-v1.0.3
           path: ${{ steps.find_apk.outputs.apk_path }}
           retention-days: 30
 
@@ -80,9 +81,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.2
-          name: "عين التاجر v1.0.2 (النسخة المستقلة الكاملة)"
-          body: "النسخة المستقلة لتطبيق عين التاجر — مدمج بها كود الـ JavaScript وحزمة العرض بالكامل للعمل المباشر على الهاتف دون الحاجة لأي خادم محلي"
+          tag_name: v1.0.3
+          name: "عين التاجر v1.0.3 (إصلاح مشكلة الشعار وبدء التشغيل الفوري)"
+          body: |
+            تحديث شامل لحل مشكلة التوقف عند الشعار (Splash Screen):
+            - تعطيل reactCompiler التجريبي لضمان توافق محرك Hermes وحزمة العرض في وضع Release.
+            - إزالة تعليق الشاشة الافتتاحية التلقائي للسماح بظهور واجهة التطبيق وتسجيل الدخول فوراً.
+            - تأمين وتدريع معالجات السمات والأزرار لمنع أي خطأ غير معالج أثناء التهيئة الأولى.
+            - التطبيق مدمج بالكامل وبداخله حزمة الجافاسكريبت والموارد المستقلة 100%.
           files: ${{ steps.find_apk.outputs.apk_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

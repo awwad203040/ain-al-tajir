@@ -16,16 +16,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>(systemScheme);
 
   const applyScheme = useCallback((scheme: ColorScheme) => {
-    nativewindColorScheme.set(scheme);
-    Appearance.setColorScheme?.(scheme);
+    try {
+      nativewindColorScheme.set(scheme);
+      Appearance.setColorScheme?.(scheme);
+    } catch (e) {
+      console.warn("[theme-provider] applyScheme error:", e);
+    }
     if (typeof document !== "undefined") {
-      const root = document.documentElement;
-      root.dataset.theme = scheme;
-      root.classList.toggle("dark", scheme === "dark");
-      const palette = SchemeColors[scheme];
-      Object.entries(palette).forEach(([token, value]) => {
-        root.style.setProperty(`--color-${token}`, value);
-      });
+      try {
+        const root = document.documentElement;
+        root.dataset.theme = scheme;
+        root.classList.toggle("dark", scheme === "dark");
+        const palette = SchemeColors[scheme];
+        Object.entries(palette).forEach(([token, value]) => {
+          root.style.setProperty(`--color-${token}`, value);
+        });
+      } catch {}
     }
   }, []);
 
@@ -38,9 +44,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyScheme(colorScheme);
   }, [applyScheme, colorScheme]);
 
-  const themeVariables = useMemo(
-    () =>
-      vars({
+  const themeVariables = useMemo(() => {
+    try {
+      return vars({
         "color-primary": SchemeColors[colorScheme].primary,
         "color-background": SchemeColors[colorScheme].background,
         "color-surface": SchemeColors[colorScheme].surface,
@@ -50,9 +56,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         "color-success": SchemeColors[colorScheme].success,
         "color-warning": SchemeColors[colorScheme].warning,
         "color-error": SchemeColors[colorScheme].error,
-      }),
-    [colorScheme],
-  );
+      });
+    } catch {
+      return {};
+    }
+  }, [colorScheme]);
 
   const value = useMemo(
     () => ({
@@ -61,7 +69,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }),
     [colorScheme, setColorScheme],
   );
-  console.log(value, themeVariables)
 
   return (
     <ThemeContext.Provider value={value}>

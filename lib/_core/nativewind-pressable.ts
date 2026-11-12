@@ -1,5 +1,8 @@
 // NativeWind + Pressable: className can swallow onPress. Disable className mapping globally.
 import { Pressable } from "react-native";
 import { remapProps } from "nativewind";
-
-remapProps(Pressable, { className: false });
+try {
+  remapProps(Pressable, { className: false });
+} catch (e) {
+  console.warn("[nativewind-pressable] remapProps error:", e);
+}

@@ -25,8 +25,8 @@ import { clearTrialReminderSchedule, getTrialReminderPreference, scheduleTrialRe
 
 import * as SplashScreen from "expo-splash-screen";
 
-// Prevent auto hiding before app is mounted
-SplashScreen.preventAutoHideAsync().catch(() => {});
+// Allow native splash screen to auto-hide as soon as the first frame renders
+SplashScreen.hideAsync().catch(() => {});
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -38,23 +38,21 @@ try {
 } catch {}
 
 export const unstable_settings = {
-  anchor: "(tabs)",
+  initialRouteName: "index",
 };
 
 function AppReadyGate({ children }: { children: React.ReactNode }) {
   const { isReady } = useApp();
 
   useEffect(() => {
-    if (isReady) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
+    SplashScreen.hideAsync().catch(() => {});
   }, [isReady]);
 
   useEffect(() => {
-    // Failsafe: hide splash screen after 800ms maximum
+    SplashScreen.hideAsync().catch(() => {});
     const timer = setTimeout(() => {
       SplashScreen.hideAsync().catch(() => {});
-    }, 800);
+    }, 100);
     return () => clearTimeout(timer);
   }, []);
 
@@ -115,8 +113,9 @@ export default function RootLayout() {
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
 
-  // Initialize Manus runtime for cookie injection from parent container
+  // Initialize Manus runtime and dismiss splash screen
   useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
     initManusRuntime();
   }, []);
 
