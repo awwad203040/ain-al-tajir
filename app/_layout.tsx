@@ -42,27 +42,10 @@ export const unstable_settings = {
 };
 
 function AppReadyGate({ children }: { children: React.ReactNode }) {
-  const { isReady } = useApp();
-
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
-  }, [isReady]);
-
-  useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
-    const timer = setTimeout(() => {
-      SplashScreen.hideAsync().catch(() => {});
-    }, 100);
-    return () => clearTimeout(timer);
   }, []);
 
-  if (!isReady) {
-    return (
-      <View style={{ alignItems: "center", backgroundColor: "#F4F7F6", flex: 1, justifyContent: "center" }}>
-        <ActivityIndicator color="#0F766E" size="large" />
-      </View>
-    );
-  }
   return <>{children}</>;
 }
 

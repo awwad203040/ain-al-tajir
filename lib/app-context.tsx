@@ -211,7 +211,7 @@ const TASKS_KEY = "ain-altajir-tasks";
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("ar");
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([
     { id: "task-1", title: "مراجعة فرق المخزون في فرع الرياض", completed: false, dueLabel: "اليوم، 4:00 م" },
     { id: "task-2", title: "اعتماد طلب إعادة المخزون", completed: true, dueLabel: "اكتملت اليوم" },

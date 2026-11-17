@@ -85,6 +85,7 @@ const config: ExpoConfig = {
     favicon: "./assets/images/favicon.png",
   },
   plugins: [
+    "./plugins/withSplashTimeout.js",
     "expo-router",
     [
       "expo-audio",
